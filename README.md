@@ -1,10 +1,10 @@
 # Vocalis AI
 
-Vocalis AI is a transparent AI call assistant prototype. The public landing page includes a responsive call demo, animated voice visualizer, theme switch, installable Progressive Web App, and links to the original call dashboard at `/app`. The existing call-assistant backend includes a signed Twilio voice webhook for unanswered calls after you connect Firebase, deploy the server over HTTPS, and configure forwarding with a carrier or voice provider.
+Vocalis AI is a real inbound-call assistant application. The web dashboard has no simulated dialer or fabricated call history. It receives unanswered calls through a configured Twilio voice number, discloses that it is an AI assistant, uses a reachable Ollama model to respond to callers, and saves call transcripts and summaries in Firestore under the configured Firebase user.
 
-The assistant identifies itself as AI, can take a concise message or callback request, and saves a summary for the signed-in account. It must not claim that it booked an appointment, transferred a call, or completed another action unless that action is actually integrated and confirmed.
+The repository contains the application and provider integration. It does not include Twilio, Firebase, carrier, model-hosting, or deployment credentials, so live calls will remain unavailable until you connect those services.
 
-## Run the local prototype
+## Run locally
 
 Requirements: Node.js 20 or later and npm.
 
@@ -13,43 +13,39 @@ npm install
 npm run dev
 ```
 
-Open the Vite address printed in the terminal (normally `http://127.0.0.1:5173`). The landing page's sample call is a scripted local simulation; open `/app` and choose **Use local demo** for the saved dashboard call flow. Neither demo places or receives a carrier phone call.
+The Vite page normally opens at `http://127.0.0.1:5173`; the API runs on port `4174`. Copy `.env.example` to `.env` and configure Firebase, Ollama, and Twilio. The `/api/config` endpoint probes whether the selected Ollama model is reachable and reports whether Twilio and Firebase server credentials are configured. The website displays those real readiness results.
+
+## Configure Firebase
+
+1. Create a Firebase project, enable Google Authentication, create Firestore, and register a web app.
+2. Set `FIREBASE_WEB_CONFIG` to the web app configuration. This client configuration is public, but must refer to your own project.
+3. Give the backend Firebase Admin credentials using `FIREBASE_SERVICE_ACCOUNT`, or set `GOOGLE_APPLICATION_CREDENTIALS` and `FIREBASE_PROJECT_ID` in the deployment environment.
+4. Install the rules from `firestore.rules`.
+5. Sign in with Google to access the dashboard. The server verifies ID tokens and scopes records to `users/{uid}/calls` and instructions to `users/{uid}/settings/assistant`.
+
+Do not commit Firebase service-account credentials or `.env` files.
+
+## Configure the AI model
+
+Run Ollama somewhere the backend can reach over HTTP. Set `OLLAMA_BASE_URL` and `OLLAMA_MODEL` to the host and an installed model. The server checks `/api/tags` for that model and calls `/api/chat` for caller replies. There is no scripted or deterministic fallback: if the model is not reachable, the phone greeting reports temporary unavailability and ends the call instead of pretending an AI answered.
+
+## Configure real incoming phone calls
+
+1. Deploy the API to a public HTTPS host reachable by Twilio, Firebase, and the Ollama host.
+2. Set `PUBLIC_BASE_URL`, `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_PHONE_NUMBER`, and `TWILIO_OWNER_UID`. `TWILIO_OWNER_UID` is the Firebase UID that owns the call records.
+3. Set the Twilio phone number's incoming voice webhook to `https://YOUR_HOST/api/twilio/voice` using HTTP POST.
+4. Configure your mobile carrier or provider to forward unanswered calls to the Twilio number. Forwarding is a manual phone-account setting and is not detectable by this app.
+5. Place a call from a phone you control. Verify the AI disclosure, caller speech handling, and saved call record in the signed-in dashboard.
+
+Twilio request signatures are validated before webhooks are handled. Twilio speech recognition supplies text to the AI model; this application does not record caller audio. The current server configuration uses one `TWILIO_OWNER_UID`, so one deployment is configured for one owner's records.
 
 ## Install on phones
 
-The site is an installable PWA. Deploy it over HTTPS, then on iPhone open it in Safari and select **Share → Add to Home Screen**. On Android use Chrome's **Install app** prompt or menu. The page includes a matching install button and platform-specific instructions.
+The website can be installed as a Progressive Web App over HTTPS. On iPhone, open it in Safari and select **Share → Add to Home Screen**. On Android, use Chrome's **Install app** prompt or menu. The included Android APK is a development build; it is not a store release and requires the backend URL and Firebase configuration to be set for use.
 
-The mobile page also links a 5 MB Android debug-preview APK served from `downloads/vocalis-android-preview.apk`. It is development-signed for testing, not a Play Store release.
+Native iOS and Android shells are included through Capacitor. See [`docs/MOBILE_APP.md`](docs/MOBILE_APP.md). Native builds require Android Studio or macOS with Xcode. Store publication requires signing and developer accounts. Set `VITE_API_BASE_URL` before packaging so a native app can reach the deployed API.
 
-Native iOS and Android shells are included through Capacitor. See [`docs/MOBILE_APP.md`](docs/MOBILE_APP.md). The projects can be synced with `npm run mobile:sync`, opened with `npm run mobile:android` / `npm run mobile:ios`, and require Android Studio or macOS with Xcode for native builds. Store publication needs signing and developer accounts. Set `VITE_API_BASE_URL` in the build environment to the deployed API host before packaging so the native dashboard can reach the backend.
-
-See [`docs/WEB_AND_MOBILE.md`](docs/WEB_AND_MOBILE.md) for the landing page, installation, native project, and release status.
-
-By default the prototype uses a deterministic local reply engine, so an AI service is not needed. To use a local Ollama model, start Ollama and set `OLLAMA_BASE_URL` and `OLLAMA_MODEL` in `.env`.
-
-## Google sign-in and per-user cloud data
-
-1. Create a Firebase project and enable Google as an Authentication provider.
-2. Create a Firestore database and register a web app.
-3. Copy `.env.example` to `.env`. Set `FIREBASE_WEB_CONFIG` to the Firebase web app configuration.
-4. Configure backend Application Default Credentials or set `FIREBASE_SERVICE_ACCOUNT` to the service-account JSON for local development. Set `FIREBASE_PROJECT_ID` when needed. Keep credentials private and out of source control.
-5. Install the rules in `firestore.rules`.
-
-The API verifies Firebase ID tokens and reads/writes call records only under `users/{uid}/calls`; approved instructions are stored under `users/{uid}/settings/assistant`. Local demo calls and settings are stored in ignored files under `work/data/`. The backend uses the Admin SDK and therefore bypasses Firestore rules; the API's token verification and UID-scoped paths are the access boundary for these server requests.
-
-## Connect live inbound calls
-
-The server includes Twilio-compatible endpoints at `/api/twilio/voice` and `/api/twilio/turn`. To use them:
-
-1. Deploy the app on a public HTTPS host that can reach Firebase and (optionally) Ollama.
-2. Set `PUBLIC_BASE_URL`, `TWILIO_AUTH_TOKEN`, `TWILIO_OWNER_UID`, Firebase Admin credentials, and the production environment values.
-3. Configure the Twilio number's incoming voice webhook to `https://YOUR_HOST/api/twilio/voice` using HTTP POST.
-4. Enable unanswered-call forwarding from your phone line to that Twilio number, after checking your carrier's forwarding options and charges.
-5. Place a controlled test call and confirm the AI disclosure, transcript, and account call summary.
-
-The Twilio SDK validates request signatures before handling voice webhooks. The first greeting discloses AI use. The prototype does not record audio; Twilio speech recognition supplies text to the assistant. Real calls require a Twilio number/account, a reachable HTTPS deployment, Firebase credentials, and carrier forwarding. None of these external services is provisioned by this repository.
-
-## Build and verify
+## Build
 
 ```sh
 npm run typecheck
@@ -57,20 +53,16 @@ npm run build
 npm start
 ```
 
-`npm start` serves the built app and API on port `4174`. In production, set `NODE_ENV=production`; local demo authentication is then disabled.
-
-## Project documents
-
-See `docs/PRD.md`, `docs/SRS.md`, and `docs/IMPLEMENTATION_PLAN.md` for the product requirements, system requirements, and staged delivery plan. PDF editions are included in `docs/pdfs/`.
+`npm start` serves the production build and API on port `4174`. Set `NODE_ENV=production` in deployment. See [`docs/WEB_AND_MOBILE.md`](docs/WEB_AND_MOBILE.md), [`docs/PRD.md`](docs/PRD.md), [`docs/SRS.md`](docs/SRS.md), and [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md) for product and release details.
 
 ## Current limits
 
-- The local demo is usable without third-party credentials; it is not a replacement for carrier forwarding.
-- Google sign-in and cloud persistence require a Firebase project and server credentials.
-- Live answering requires a Twilio account or compatible provider, a public HTTPS deployment, and working call forwarding.
-- Local demo instructions are stored on the device; signed-in instructions use a UID-scoped Firestore settings document.
-- Ollama is optional. If it is unavailable or returns an error, the server falls back to its deterministic safe responses.
+- Live incoming calls require the external provider credentials and phone-carrier forwarding described above.
+- The current voice integration uses Twilio speech recognition and speech playback; it is not a low-latency streaming voice model.
+- AI replies depend on the configured Ollama server and model being reachable.
+- Call transcripts and summaries are stored as text. Caller audio is not recorded.
+- iOS and Android packages need deployment configuration and signing before public release.
 
 ## Security
 
-Do not commit `.env`, service-account keys, caller records, or phone numbers. Review `SECURITY.md` before exposing a deployment publicly.
+Do not commit `.env`, service-account keys, caller records, or private phone numbers. Review [`SECURITY.md`](SECURITY.md) before exposing a deployment publicly.
