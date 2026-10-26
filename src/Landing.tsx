@@ -78,7 +78,7 @@ export default function Landing() {
     <main>
       <section className="hero-section"><div className="hero-copy">
         <motion.div className="hero-kicker" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .7, ease: [0.16, 1, .3, 1] }}><span className="kicker-icon"><Sparkles size={14} /></span>THE VOICE LAYER FOR MODERN BUSINESS</motion.div>
-        <motion.h1 initial={{ opacity: 0, y: 22 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: .08, duration: .85, ease: [0.16, 1, .3, 1] }}>Conversations that scale.<br /><span>AI voice agents</span><br />that sound human.</motion.h1>
+        <motion.h1 initial={{ opacity: 0, y: 22 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: .08, duration: .85, ease: [0.16, 1, .3, 1] }}>Conversations That Scale.<br /><span>AI Voice Agents</span><br />That Sound Human.</motion.h1>
         <motion.p className="hero-subtitle" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: .18, duration: .75, ease: [0.16, 1, .3, 1] }}>Instant call routing, human empathy, and CRM-ready context—so every caller feels heard, even when your team is away.</motion.p>
         <div className="hero-actions flex items-center gap-3"><MagneticButton onClick={startCall} reduced={Boolean(reduce)}><span className="button-glint" /><Phone size={17} fill="currentColor" />Launch live AI call demo<ArrowRight size={16} /></MagneticButton><button className="secondary-cta" onClick={() => go("platform")}><span className="secondary-play"><ArrowRight size={13} /></span>Explore the platform</button></div>
         <div className="trust-row"><div className="trust-avatars"><span>J</span><span>M</span><span>A</span><span><AudioLines size={12} /></span></div><span>Always-on coverage. <b>Human-first by design.</b></span><i /><span className="trust-safe"><ShieldCheck size={14} />AI disclosure built in</span></div>
@@ -133,7 +133,8 @@ function CanvasWaves({ reduced }: { reduced: boolean }) {
   return <canvas className="wave-canvas" ref={ref} aria-hidden="true" />;
 }
 function Orb({ reduced, active }: { reduced: boolean; active: boolean }) {
-  return <motion.div className={"voice-orb-wrap" + (active ? " orb-active" : "")} whileHover={reduced ? undefined : { scale: 1.04 }}>
+  const [hovered, setHovered] = useState(false);
+  return <motion.div className={"voice-orb-wrap" + (active ? " orb-active" : "") + (hovered ? " orb-hovered" : "")} onHoverStart={() => setHovered(true)} onHoverEnd={() => setHovered(false)} whileHover={reduced ? undefined : { scale: 1.04 }}>
     <motion.div className="orb-halo" animate={reduced ? undefined : { rotate: 360 }} transition={{ duration: 44, repeat: Infinity, ease: "linear" }} /><div className="orb-ring ring-outer" /><div className="orb-ring ring-inner" /><div className="orb-wave wave-one" /><div className="orb-wave wave-two" /><div className="orb-wave wave-three" />
     <motion.div className="orb-core" animate={reduced ? undefined : { y: [0, -9, 0], scale: active ? [1, 1.04, 1] : [1, 1.025, 1] }} transition={{ duration: active ? 1.3 : 4.6, repeat: Infinity, ease: "easeInOut" }}><span className="orb-core-gloss" /><AudioLines size={39} strokeWidth={1.3} /><i /></motion.div>
     {Array.from({ length: 20 }, (_, i) => <i key={i} className="orb-particle" style={{ "--particle": i } as CSSProperties} />)}
@@ -141,8 +142,8 @@ function Orb({ reduced, active }: { reduced: boolean; active: boolean }) {
   </motion.div>;
 }
 function MagneticButton({ children, onClick, reduced }: { children: ReactNode; onClick: () => void; reduced: boolean }) {
-  const [point, setPoint] = useState({ x: 0, y: 0 });
-  return <motion.button className="glass-cta" onClick={onClick} onPointerMove={(e) => { if (reduced) return; const r = e.currentTarget.getBoundingClientRect(); setPoint({ x: (e.clientX - r.left - r.width / 2) * .06, y: (e.clientY - r.top - r.height / 2) * .1 }); }} onPointerLeave={() => setPoint({ x: 0, y: 0 })} animate={{ x: point.x, y: point.y }} whileHover={reduced ? undefined : { scale: 1.04, boxShadow: "0 0 42px rgba(0,240,255,.2),0 0 75px rgba(255,0,122,.15)" }} whileTap={reduced ? undefined : { scale: .96 }} transition={{ type: "spring", stiffness: 260, damping: 20 }}>{children}</motion.button>;
+  const [point, setPoint] = useState({ x: 0, y: 0, rotateX: 0, rotateY: 0 });
+  return <motion.button className="glass-cta" onClick={onClick} onPointerMove={(e) => { if (reduced || e.pointerType !== "mouse") return; const r = e.currentTarget.getBoundingClientRect(); const x = (e.clientX - r.left) / r.width - .5; const y = (e.clientY - r.top) / r.height - .5; setPoint({ x: x * 10, y: y * 8, rotateX: -y * 9, rotateY: x * 11 }); }} onPointerLeave={() => setPoint({ x: 0, y: 0, rotateX: 0, rotateY: 0 })} animate={{ x: point.x, y: point.y, rotateX: point.rotateX, rotateY: point.rotateY, transformPerspective: 900 }} whileHover={reduced ? undefined : { scale: 1.04, boxShadow: "0 0 42px rgba(0,240,255,.2),0 0 75px rgba(255,0,122,.15)" }} whileTap={reduced ? undefined : { scale: .96 }} transition={{ type: "spring", stiffness: 260, damping: 20 }}>{children}</motion.button>;
 }
 function TranscriptLine({ speaker, text }: { speaker: string; text: string }) {
   return <div className={"transcript-message" + (speaker === "Maya" ? " caller-message" : "")}><span>{speaker === "Maya" ? "CALLER" : "VOCALIS AI"} <time>NOW</time></span><p>{text}<b className="type-cursor" /></p></div>;
