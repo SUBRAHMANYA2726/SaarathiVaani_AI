@@ -1,6 +1,6 @@
-# Saarathi Vaani AI
+# Vocalis AI
 
-Saarathi Vaani is a transparent AI call assistant prototype. It gives you a working local dashboard and call simulator today, and includes a signed Twilio voice webhook for real unanswered calls after you connect your Firebase project, deploy the server over HTTPS, and configure call forwarding with your carrier or voice provider.
+Vocalis AI is a transparent AI call assistant prototype. The public landing page includes a responsive call demo, animated voice visualizer, theme switch, installable Progressive Web App, and links to the original call dashboard at `/app`. The existing call-assistant backend includes a signed Twilio voice webhook for unanswered calls after you connect Firebase, deploy the server over HTTPS, and configure forwarding with a carrier or voice provider.
 
 The assistant identifies itself as AI, can take a concise message or callback request, and saves a summary for the signed-in account. It must not claim that it booked an appointment, transferred a call, or completed another action unless that action is actually integrated and confirmed.
 
@@ -13,7 +13,17 @@ npm install
 npm run dev
 ```
 
-Open the Vite address printed in the terminal (normally `http://127.0.0.1:5173`). Choose **Use local demo** or start a test call. The test call exercises the dashboard, safe message-taking responses, and the local call log. It does not place or receive a carrier phone call.
+Open the Vite address printed in the terminal (normally `http://127.0.0.1:5173`). The landing page's sample call is a scripted local simulation; open `/app` and choose **Use local demo** for the saved dashboard call flow. Neither demo places or receives a carrier phone call.
+
+## Install on phones
+
+The site is an installable PWA. Deploy it over HTTPS, then on iPhone open it in Safari and select **Share → Add to Home Screen**. On Android use Chrome's **Install app** prompt or menu. The page includes a matching install button and platform-specific instructions.
+
+The mobile page also links a 5 MB Android debug-preview APK served from `downloads/vocalis-android-preview.apk`. It is development-signed for testing, not a Play Store release.
+
+Native iOS and Android shells are included through Capacitor. See [`docs/MOBILE_APP.md`](docs/MOBILE_APP.md). The projects can be synced with `npm run mobile:sync`, opened with `npm run mobile:android` / `npm run mobile:ios`, and require Android Studio or macOS with Xcode for native builds. Store publication needs signing and developer accounts. Set `VITE_API_BASE_URL` in the build environment to the deployed API host before packaging so the native dashboard can reach the backend.
+
+See [`docs/WEB_AND_MOBILE.md`](docs/WEB_AND_MOBILE.md) for the landing page, installation, native project, and release status.
 
 By default the prototype uses a deterministic local reply engine, so an AI service is not needed. To use a local Ollama model, start Ollama and set `OLLAMA_BASE_URL` and `OLLAMA_MODEL` in `.env`.
 

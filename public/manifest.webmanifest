@@ -1,0 +1,18 @@
+{
+  "id": "/",
+  "name": "Vocalis AI",
+  "short_name": "Vocalis",
+  "description": "Thoughtful AI voice agents for every caller.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "portrait-primary",
+  "background_color": "#080810",
+  "theme_color": "#080810",
+  "icons": [
+    { "src": "/vocalis-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/vocalis-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/vocalis-icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

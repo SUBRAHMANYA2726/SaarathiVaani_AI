@@ -35,7 +35,14 @@ if (!admin.apps.length && serviceAccountText) {
 const firestore = () => (admin.apps.length ? admin.firestore() : undefined);
 const isAdminConfigured = () => Boolean(admin.apps.length);
 
-const allowedOrigins = new Set(["http://127.0.0.1:5173", "http://localhost:5173", process.env.APP_ORIGIN].filter(Boolean) as string[]);
+const allowedOrigins = new Set([
+  "http://127.0.0.1:5173",
+  "http://localhost:5173",
+  "capacitor://localhost",
+  "https://localhost",
+  ...(process.env.APP_ORIGIN ? [process.env.APP_ORIGIN] : []),
+  ...(process.env.MOBILE_ORIGINS ?? "").split(",").map((origin) => origin.trim()).filter(Boolean),
+]);
 app.use(cors({ origin: (origin, callback) => {
   if (!origin || allowedOrigins.has(origin)) callback(null, true);
   else callback(new Error("Origin is not allowed."));
@@ -276,6 +283,12 @@ app.post("/api/twilio/turn", async (req, res) => {
   res.type("text/xml").send(twiml(`<Say>${xmlEscape(reply)}</Say><Gather input="speech" speechTimeout="auto" timeout="8" action="${action}" method="POST" />`));
 });
 
+app.get("/downloads/vocalis-android-preview.apk", (_req, res, next) => {
+  res.download(path.resolve("downloads/vocalis-android-preview.apk"), "vocalis-android-preview.apk", (error) => {
+    if (error && !res.headersSent) next(error);
+  });
+});
+
 if (process.env.NODE_ENV === "production") {
   const staticRoot = path.resolve("dist");
   app.use(express.static(staticRoot));
@@ -287,4 +300,4 @@ app.use((error: unknown, _req: Request, res: Response, _next: NextFunction) => {
   res.status(500).json({ error: "The request could not be completed." });
 });
 
-app.listen(port, () => console.log(`Saarathi Vaani API listening on port ${port}`));
+app.listen(port, () => console.log(`Vocalis AI API listening on port ${port}`));
